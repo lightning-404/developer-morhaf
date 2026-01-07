@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>محول العملة الذكي</title>
+
+<style>
+html, body {
+    margin: 0; padding: 0;
+    font-family: Tahoma, Arial;
+    background: linear-gradient(135deg, #0a2342, #1a4c7c);
+    color: white;
+}
+.logo {
+    text-align: center;
+    font-size: 32px;
+    font-weight: bold;
+    margin-top: 15px;
+    color: #ffdd33;
+    text-shadow: 0 0 8px #ffe066;
+}
+.container {
+    max-width: 420px;
+    background: #ffffffee;
+    margin: 20px auto;
+    border-radius: 15px;
+    padding: 20px;
+    color: #0a2342;
+}
+h2 { text-align: center; }
+label { font-weight: bold; margin-top: 10px; display: block; }
+
+input, select {
+    width: 100%; padding: 12px; margin-top: 5px;
+    border-radius: 8px; border: 1px solid #777;
+}
+button {
+    width: 100%; padding: 12px; margin-top: 15px;
+    background: #0f4c75; color: white; border: none;
+    border-radius: 10px; font-size: 18px;
+}
+.pay-method {
+    display: flex; gap: 10px; margin-top: 10px;
+}
+.pm-btn {
+    flex: 1; text-align: center; padding: 10px;
+    background: #ddd; border-radius: 8px; cursor: pointer;
+    font-weight: bold;
+}
+.pm-btn.active { background: #0f4c75; color: white; }
+.result-box {
+    background: #f3f3f3;
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="logo">Morhaf Site</div>
+
+<div class="container">
+
+<h2>محول العملة (قديم ⇄ جديد)</h2>
+
+<label>سعر السلعة(الغرض):</label>
+<input type="number" id="price" placeholder="مثال: 5000 أو 50">
+
+<label>عملة السعر للغرض:</label>
+<select id="priceCurrency">
+    <option value="old">قديم</option>
+    <option value="new">جديد</option>
+</select>
+
+<label>طريقة الدفع:</label>
+<div class="pay-method">
+    <div class="pm-btn active" id="btnPayNew" onclick="setPay('new')">دفع جديد</div>
+    <div class="pm-btn" id="btnPayOld" onclick="setPay('old')">دفع قديم</div>
+    <div class="pm-btn" id="btnPayMix" onclick="setPay('mix')">مختلط</div>
+</div>
+
+<!-- دفع جديد -->
+<div id="payNewBox">
+    <label>المدفوع بالجديد:</label>
+    <input type="number" id="paidNew">
+</div>
+
+<!-- دفع قديم -->
+<div id="payOldBox" style="display:none;">
+    <label>المدفوع بالقديم:</label>
+    <input type="number" id="paidOld">
+</div>
+
+<!-- دفع مختلط -->
+<div id="payMixBox" style="display:none;">
+    <label>بالجديد:</label>
+    <input type="number" id="mixNew">
+    <label>بالقديم:</label>
+    <input type="number" id="mixOld">
+</div>
+
+<button onclick="calculate()">احسب الباقي</button>
+
+<div class="result-box">
+    <p><strong>نتيجة الحساب:</strong></p>
+    <p id="calcInfo">—</p>
+    <p><strong>إمّا بالجديد:</strong> <span id="resultNew">-</span></p>
+    <p><strong>أو بالقديم:</strong> <span id="resultOld">-</span></p>
+    <p><strong>مختلط:</strong> <span id="resultMix">-</span></p>
+</div>
+
+<hr style="margin-top:30px; border:0.5px solid #ccc;">
+
+<h2>التحويل المباشر</h2>
+
+<div class="pay-method">
+    <div class="pm-btn active" id="dirNewToOld" onclick="setDir('newToOld')">من جديد الى قديم</div>
+    <div class="pm-btn" id="dirOldToNew" onclick="setDir('oldToNew')">من قديم الى جديد</div>
+</div>
+
+<label>أدخل القيمة للتحويل:</label>
+<input type="number" id="directValue">
+
+<button onclick="directConvert()">تحويل</button>
+
+<div class="result-box">
+    <p><strong>النتيجة:</strong> <span id="directResult">-</span></p>
+</div>
+
+</div>
+
+<script>
+
+let payType = "new";
+let directType = "newToOld";
+
+function setPay(type) {
+    payType = type;
+    document.getElementById("btnPayNew").classList.remove("active");
+    document.getElementById("btnPayOld").classList.remove("active");
+    document.getElementById("btnPayMix").classList.remove("active");
+
+    document.getElementById("payNewBox").style.display = "none";
+    document.getElementById("payOldBox").style.display = "none";
+    document.getElementById("payMixBox").style.display = "none";
+
+    if (type === "new") {
+        document.getElementById("btnPayNew").classList.add("active");
+        document.getElementById("payNewBox").style.display = "block";
+    }
+    if (type === "old") {
+        document.getElementById("btnPayOld").classList.add("active");
+        document.getElementById("payOldBox").style.display = "block";
+    }
+    if (type === "mix") {
+        document.getElementById("btnPayMix").classList.add("active");
+        document.getElementById("payMixBox").style.display = "block";
+    }
+}
+
+function calculate() {
+
+    let price = parseFloat(document.getElementById("price").value) || 0;
+    let currency = document.getElementById("priceCurrency").value;
+
+    // تحويل السعر إلى جديد دائماً
+    let priceNew = currency === "old" ? price / 100 : price;
+
+    // تحويل المدفوع إلى جديد
+    let paidNew = 0;
+
+    if (payType === "new") {
+        paidNew = parseFloat(document.getElementById("paidNew").value) || 0;
+    }
+    if (payType === "old") {
+        let valOld = parseFloat(document.getElementById("paidOld").value) || 0;
+        paidNew = valOld / 100;
+    }
+    if (payType === "mix") {
+        let n = parseFloat(document.getElementById("mixNew").value) || 0;
+        let o = parseFloat(document.getElementById("mixOld").value) || 0;
+        paidNew = n + (o / 100);
+    }
+
+    let diff = paidNew - priceNew;
+
+    if (diff === 0) {
+        calcInfo.textContent = "تم الدفع كاملًا.";
+        resultNew.textContent = 0;
+        resultOld.textContent = 0;
+        resultMix.textContent = "0 جديد + 0 قديم";
+        return;
+    }
+
+    if (diff < 0) {
+        let needNew = Math.abs(diff);
+        let needOld = needNew * 100;
+
+        calcInfo.textContent = "👇انت دافع أقل من السعر - يبقى عليك👇🏻";
+        resultNew.textContent = needNew.toFixed(2);
+        resultOld.textContent = needOld.toFixed(0);
+        resultMix.textContent = `${Math.floor(needNew)} جديد + ${Math.round((needNew-Math.floor(needNew))*100)} قديم`;
+    }
+
+    if (diff > 0) {
+        let backNew = diff;
+        let backOld = backNew * 100;
+
+        calcInfo.textContent = "👇🏻انت دافع أكثر من السعر- بيرجعلك👇🏻";
+        resultNew.textContent = backNew.toFixed(2);
+        resultOld.textContent = backOld.toFixed(0);
+        resultMix.textContent = `${Math.floor(backNew)} جديد + ${Math.round((backNew-Math.floor(backNew))*100)} قديم`;
+    }
+}
+
+function setDir(type) {
+    directType = type;
+    document.getElementById("dirNewToOld").classList.remove("active");
+    document.getElementById("dirOldToNew").classList.remove("active");
+
+    if (type === "newToOld") document.getElementById("dirNewToOld").classList.add("active");
+    else document.getElementById("dirOldToNew").classList.add("active");
+}
+
+function directConvert() {
+    let val = parseFloat(document.getElementById("directValue").value) || 0;
+
+    if (directType === "newToOld")
+        directResult.textContent = (val * 100).toFixed(0) + " قديم";
+    else
+        directResult.textContent = (val / 100).toFixed(2) + " جديد";
+}
+
+</script>
+
+</body>
+</html>
