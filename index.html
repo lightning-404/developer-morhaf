@@ -114,7 +114,7 @@ button {
 
 <hr style="margin-top:30px; border:0.5px solid #ccc;">
 
-<h2>التحويل المباشر</h2>
+<h2>التحويل المباشر للعملة بالليرة</h2>
 
 <div class="pay-method">
     <div class="pm-btn active" id="dirNewToOld" onclick="setDir('newToOld')">من جديد الى قديم</div>
@@ -229,9 +229,9 @@ function directConvert() {
     let val = parseFloat(document.getElementById("directValue").value) || 0;
 
     if (directType === "newToOld")
-        directResult.textContent = (val * 100).toFixed(0) + " قديم";
+        directResult.textContent = (val * 100).toFixed(0) + " ليرة عملة قديمة";
     else
-        directResult.textContent = (val / 100).toFixed(2) + " جديد";
+        directResult.textContent = (val / 100).toFixed(2) + " ليرة عملة جديدة";
 }
 
 </script>
